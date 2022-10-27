@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_version_plus/new_version_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,10 +35,10 @@ class _MyHomePageState extends State<MyHomePage> {
     // You can let the plugin handle fetching the status and showing a dialog,
     // or you can fetch the status and display your own dialog, or no dialog.
     const simpleBehavior = true;
-
-    if (simpleBehavior) {
-      basicStatusCheck(newVersion);
-    }
+    advancedStatusCheck(newVersion);
+    // if (simpleBehavior) {
+    //   basicStatusCheck(newVersion);
+    // }
     // else {
     //   advancedStatusCheck(newVersion);
     // }
@@ -58,8 +59,28 @@ class _MyHomePageState extends State<MyHomePage> {
       newVersion.showUpdateDialog(
         context: context,
         versionStatus: status,
-        dialogTitle: 'Custom Title',
-        dialogText: 'Custom Text',
+        allowDismissal: false,
+        dialogTitle: Column(
+          children: [
+            SvgPicture.asset(
+              'assets/info_square.svg',
+              width: 36.67,
+              height: 36.67,
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text(
+              'Обновление доступно',
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        dialogText: const Text(
+          'Please update to the latest version of the app to continue.',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
+          textAlign: TextAlign.center,
+        ),
       );
     }
   }

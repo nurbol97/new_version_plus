@@ -106,16 +106,14 @@ class NewVersionPlus {
     } else if (Platform.isAndroid) {
       return _getAndroidStoreVersion(packageInfo);
     } else {
-      debugPrint(
-          'The target platform "${Platform.operatingSystem}" is not yet supported by this package.');
+      debugPrint('The target platform "${Platform.operatingSystem}" is not yet supported by this package.');
       return null;
     }
   }
 
   /// This function attempts to clean local version strings so they match the MAJOR.MINOR.PATCH
   /// versioning pattern, so they can be properly compared with the store version.
-  String _getCleanVersion(String version) =>
-      RegExp(r'\d+\.\d+\.\d+').stringMatch(version) ?? '0.0.0';
+  String _getCleanVersion(String version) => RegExp(r'\d+\.\d+\.\d+').stringMatch(version) ?? '0.0.0';
 
   /// iOS info is fetched by using the iTunes lookup API, which returns a
   /// JSON document.
@@ -139,19 +137,16 @@ class NewVersionPlus {
     }
     return VersionStatus._(
       localVersion: _getCleanVersion(packageInfo.version),
-      storeVersion:
-          _getCleanVersion(forceAppVersion ?? jsonObj['results'][0]['version']),
+      storeVersion: _getCleanVersion(forceAppVersion ?? jsonObj['results'][0]['version']),
       appStoreLink: jsonObj['results'][0]['trackViewUrl'],
       releaseNotes: jsonObj['results'][0]['releaseNotes'],
     );
   }
 
   /// Android info is fetched by parsing the html of the app store page.
-  Future<VersionStatus?> _getAndroidStoreVersion(
-      PackageInfo packageInfo) async {
+  Future<VersionStatus?> _getAndroidStoreVersion(PackageInfo packageInfo) async {
     final id = androidId ?? packageInfo.packageName;
-    final uri = Uri.https(
-        "play.google.com", "/store/apps/details", {"id": id, "hl": "en"});
+    final uri = Uri.https("play.google.com", "/store/apps/details", {"id": id, "hl": "en"});
     final response = await http.get(uri);
     if (response.statusCode != 200) {
       debugPrint('Can\'t find an app in the Play Store with the id: $id');
@@ -173,14 +168,10 @@ class NewVersionPlus {
       final releaseNotesElement = sectionElements.firstWhereOrNull(
         (elm) => elm.querySelector('.wSaTQd')!.text == 'What\'s New',
       );
-      releaseNotes = releaseNotesElement
-          ?.querySelector('.PHBdkd')
-          ?.querySelector('.DWPxHb')
-          ?.text;
+      releaseNotes = releaseNotesElement?.querySelector('.PHBdkd')?.querySelector('.DWPxHb')?.text;
     } else {
       final scriptElements = document.getElementsByTagName('script');
-      final infoScriptElement = scriptElements
-          .firstWhereOrNull((elm) => elm.text.contains('key: \'ds:5\''));
+      final infoScriptElement = scriptElements.firstWhereOrNull((elm) => elm.text.contains('key: \'ds:5\''));
 
       if (infoScriptElement == null) return null;
 
@@ -232,58 +223,80 @@ class NewVersionPlus {
   void showUpdateDialog({
     required BuildContext context,
     required VersionStatus versionStatus,
-    String dialogTitle = 'Update Available',
-    String? dialogText,
+    Widget dialogTitle = const Text('Update Available'),
+    Widget? dialogText,
     String updateButtonText = 'Update',
     bool allowDismissal = true,
-    String dismissButtonText = 'Maybe Later',
+    Widget? dismissButtonText,
     VoidCallback? dismissAction,
     LaunchMode launchMode = LaunchMode.platformDefault,
   }) async {
-    final dialogTitleWidget = Text(dialogTitle);
-    final dialogTextWidget = Text(
-      dialogText ??
-          'You can now update this app from ${versionStatus.localVersion} to ${versionStatus.storeVersion}',
-    );
-
-    final updateButtonTextWidget = Text(updateButtonText);
-
     List<Widget> actions = [
-      Platform.isAndroid
-          ? TextButton(
-              onPressed: () => _updateActionFunc(
-                allowDismissal: allowDismissal,
-                context: context,
-                appStoreLink: versionStatus.appStoreLink,
-                launchMode: launchMode,
-              ),
-              child: updateButtonTextWidget,
-            )
-          : CupertinoDialogAction(
-              onPressed: () => _updateActionFunc(
-                allowDismissal: allowDismissal,
-                context: context,
-                appStoreLink: versionStatus.appStoreLink,
-                launchMode: launchMode,
-              ),
-              child: updateButtonTextWidget,
+      ElevatedButton(
+        style: ButtonStyle(
+            elevation: MaterialStateProperty.all(0),
+            //backgroundColor: MaterialStateProperty.all(Color(0xFF22C7FF)),
+            backgroundColor: MaterialStateProperty.resolveWith<Color>(
+              (Set<MaterialState> states) {
+                if (states.contains(MaterialState.disabled)) return const Color(0xFFB3E5F6);
+                return const Color(0xFF00A7E1);
+              },
             ),
+            foregroundColor: MaterialStateProperty.resolveWith<Color>(
+              // text color
+              (Set<MaterialState> states) => states.contains(MaterialState.disabled) ? Colors.white : Colors.white,
+            ),
+            textStyle: MaterialStateProperty.all(const TextStyle(
+                color: Colors.white, fontSize: 17, fontWeight: FontWeight.w500, fontFamily: "NotoSans")),
+            minimumSize: MaterialStateProperty.all(Size(double.infinity, 44)),
+            maximumSize: MaterialStateProperty.all(Size(double.infinity, 44)),
+            //backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF22C7FF)),
+            shape: MaterialStateProperty.all(RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ))),
+        //heretext
+
+        child: Text(updateButtonText, textScaleFactor: 1.0),
+        onPressed: () => _updateActionFunc(
+          allowDismissal: allowDismissal,
+          context: context,
+          appStoreLink: versionStatus.appStoreLink,
+          launchMode: launchMode,
+        ),
+      ),
     ];
 
     if (allowDismissal) {
-      final dismissButtonTextWidget = Text(dismissButtonText);
-      dismissAction = dismissAction ??
-          () => Navigator.of(context, rootNavigator: true).pop();
+      dismissAction = dismissAction ?? () => Navigator.of(context, rootNavigator: true).pop();
       actions.add(
-        Platform.isAndroid
-            ? TextButton(
-                onPressed: dismissAction,
-                child: dismissButtonTextWidget,
-              )
-            : CupertinoDialogAction(
-                onPressed: dismissAction,
-                child: dismissButtonTextWidget,
+        ElevatedButton(
+          style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              //backgroundColor: MaterialStateProperty.all(Color(0xFF22C7FF)),
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.disabled)) return Colors.white;
+                  return Colors.white;
+                },
               ),
+              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                // text color
+                (Set<MaterialState> states) =>
+                    states.contains(MaterialState.disabled) ? const Color(0xFF292929) : const Color(0xFF292929),
+              ),
+              textStyle: MaterialStateProperty.all(const TextStyle(
+                  color: Colors.white, fontSize: 17, fontWeight: FontWeight.w500, fontFamily: "NotoSans")),
+              minimumSize: MaterialStateProperty.all(Size(double.infinity, 44)),
+              maximumSize: MaterialStateProperty.all(Size(double.infinity, 44)),
+              //backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF22C7FF)),
+              shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ))),
+          //heretext
+
+          child: dismissButtonText,
+          onPressed: dismissAction,
+        ),
       );
     }
 
@@ -292,25 +305,23 @@ class NewVersionPlus {
       barrierDismissible: allowDismissal,
       builder: (BuildContext context) {
         return WillPopScope(
-            child: Platform.isAndroid
-                ? AlertDialog(
-                    title: dialogTitleWidget,
-                    content: dialogTextWidget,
-                    actions: actions,
-                  )
-                : CupertinoAlertDialog(
-                    title: dialogTitleWidget,
-                    content: dialogTextWidget,
-                    actions: actions,
-                  ),
+            child: AlertDialog(
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              actionsPadding: const EdgeInsets.all(20),
+              title: dialogTitle,
+              content: dialogText,
+              actions: actions,
+            ),
             onWillPop: () => Future.value(allowDismissal));
       },
     );
   }
 
   /// Launches the Apple App Store or Google Play Store page for the app.
-  Future<void> launchAppStore(String appStoreLink,
-      {LaunchMode launchMode = LaunchMode.platformDefault}) async {
+  Future<void> launchAppStore(String appStoreLink, {LaunchMode launchMode = LaunchMode.platformDefault}) async {
     debugPrint(appStoreLink);
     if (await canLaunchUrl(Uri.parse(appStoreLink))) {
       await launchUrl(
