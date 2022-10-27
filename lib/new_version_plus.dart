@@ -306,6 +306,7 @@ class NewVersionPlus {
       builder: (BuildContext context) {
         return WillPopScope(
             child: AlertDialog(
+              backgroundColor: Colors.white,
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
